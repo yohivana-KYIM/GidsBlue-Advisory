@@ -314,7 +314,7 @@ const HeroSection = () => {
   };
 
   // Gestion du slider d'images de fond
-  const heroImages = [hero1, hero2, hero3];
+  const heroImages = [hero1];
 
   return (
     <section 
