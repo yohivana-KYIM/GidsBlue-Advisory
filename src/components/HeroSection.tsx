@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { ArrowRight, Shield, TrendingUp, Users, Award, CheckCircle, Star, ChevronDown, Play, Sparkles } from 'lucide-react';
+import hero1 from '../assets/hero-image.jpg';
+import hero2 from '../assets/hero-image2.jpg';
+import hero3 from '../assets/hero-image3.jpg';
 
 // Hook pour l'effet machine à écrire amélioré
 const useTypewriter = (text, speed = 80) => {
@@ -311,11 +314,7 @@ const HeroSection = () => {
   };
 
   // Gestion du slider d'images de fond
-  const heroImages = [
-    '/src/assets/hero-image.jpg',
-    '/src/assets/hero-image2.jpg',
-    '/src/assets/hero-image3.jpg',
-  ];
+  const heroImages = [hero1, hero2, hero3];
 
   return (
     <section 
