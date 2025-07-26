@@ -8,6 +8,7 @@ import CreateFormation from './CreateFormation';
 import ServicesAdmin from './ServicesAdmin';
 import ArticleBlogAdmin from './ArticleBlogAdmin';
 import PartenairesAdmin from './PartenairesAdmin';
+import MissionAdmin from './MissionAdmin';
 
 const DashboardAdmin = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -98,6 +99,7 @@ const DashboardAdmin = () => {
               <Route path="/services" element={<ServicesAdmin />} />
               <Route path="/partenaires" element={<PartenairesAdmin />} />
               <Route path="/blogs" element={<ArticleBlogAdmin />} />
+              <Route path="/missions" element={<MissionAdmin />} />
               <Route path="*" element={
                 <div className="bg-white rounded-2xl shadow-lg p-10 flex flex-col items-center justify-center text-3xl font-bold text-blue-900 w-full animate-fade-in">
                   Bienvenue sur le Dashboard Admin
