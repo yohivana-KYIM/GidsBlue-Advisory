@@ -14,7 +14,15 @@ export async function login(email: string, password: string) {
   if (!response.ok) {
     throw new Error('Erreur lors de la connexion');
   }
-  return response.json();
+  const data = await response.json();
+  if (data && data.user) {
+    localStorage.setItem('user', JSON.stringify({
+      email: data.user.email,
+      name: data.user.name
+    }));
+    localStorage.setItem('isAuthenticated', 'true');
+  }
+  return data;
 }
 
 

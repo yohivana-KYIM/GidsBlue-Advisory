@@ -27,6 +27,8 @@ import Footer from '@/components/Footer';
 import BackToTop from '@/components/BackToTop';
 import Chatbot from '@/components/Chatbot';
 import contactBanner from '@/assets/contact.png';
+import { createContact } from '@/services/contact';
+import { useNavigate } from 'react-router-dom';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -37,11 +39,32 @@ const Contact = () => {
     subject: '',
     message: ''
   });
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [showPopup, setShowPopup] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted:', formData);
+    setSuccess('');
+    setError('');
+    setLoading(true);
+    try {
+      await createContact({
+        nom: formData.name,
+        email: formData.email,
+        sujet: formData.subject,
+        message: formData.message
+      });
+      setSuccess('Votre message a bien été envoyé. Merci de nous avoir contactés !');
+      setFormData({ name: '', email: '', company: '', phone: '', subject: '', message: '' });
+      setShowPopup(true);
+    } catch (err) {
+      setError("Une erreur est survenue lors de l'envoi du message. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const contactInfo = [
@@ -100,6 +123,21 @@ const Contact = () => {
 
       {/* Contact Content */}
       <section className="py-20">
+        {showPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center animate-fade-in">
+              <h2 className="text-2xl font-bold mb-4 text-green-700">Message transmis avec succès !</h2>
+              <p className="mb-6 text-gray-700">Votre message a bien été transmis. Nous allons vous contacter dans les plus brefs délais.</p>
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl text-lg"
+                onClick={() => { setShowPopup(false); navigate('/'); }}
+                autoFocus
+              >
+                OK
+              </Button>
+            </div>
+          </div>
+        )}
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-3 gap-12">
             {/* Contact Info */}
@@ -175,6 +213,8 @@ const Contact = () => {
                 </div>
 
                 <CardContent className="p-8">
+                  {success && <div className="mb-4 p-3 rounded-xl bg-green-100 text-green-800 text-center font-semibold">{success}</div>}
+                  {error && <div className="mb-4 p-3 rounded-xl bg-red-100 text-red-800 text-center font-semibold">{error}</div>}
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
@@ -280,9 +320,10 @@ const Contact = () => {
                     <Button 
                       type="submit" 
                       className="w-full btn-primary text-lg py-6 group"
+                      disabled={loading}
                     >
                       <Send className="mr-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                      Envoyer le Message
+                      {loading ? 'Envoi en cours...' : 'Envoyer le Message'}
                     </Button>
                   </form>
                 </CardContent>

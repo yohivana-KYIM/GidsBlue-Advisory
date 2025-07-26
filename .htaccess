@@ -1,9 +1,0 @@
-# Redirection pour les applications Single Page Application (SPA)
-# Toutes les requêtes sont redirigées vers index.html, sauf les fichiers et dossiers existants
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule ^ index.html [L]
-</IfModule> 

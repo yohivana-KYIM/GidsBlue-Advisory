@@ -1,56 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Users, Calendar, Star, CheckCircle, BookOpen, Award, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { getAllFormations, Formation } from '@/services/formations';
 
 const Formations = () => {
-  const formations = [
-    {
-      id: 1,
-      title: "Pratique de l'audit interne",
-      description: "Formation complète pour acquérir une compréhension opérationnelle de la fonction d'audit interne",
-      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f",
-      duration: "4-6 semaines",
-      level: "Débutant à Intermédiaire",
-      participants: "Max 20 personnes",
-      rating: 4.8,
-      price: "Sur demande",
-      format: ["100% en ligne", "Présentiel"],
-      objectives: [
-        "Comprendre les missions de l'audit interne",
-        "Appliquer les étapes clés d'une mission",
-        "Rédiger des constats d'audit pertinents",
-        "Développer une posture professionnelle"
-      ],
-      targetAudience: "Professionnels débutants, étudiants en gestion/finance, profils en reconversion",
-      included: ["Études de cas pratiques", "Plateforme pédagogique", "Certificat de formation", "Support cours"],
-      popular: false
-    },
-    {
-      id: 2,
-      title: "Devenir CIA en 6 mois",
-      description: "Accompagnement complet et structuré pour réussir la certification CIA (Certified Internal Auditor)",
-      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173",
-      duration: "6 mois",
-      level: "Intermédiaire à Avancé",
-      participants: "Max 15 personnes",
-      rating: 4.9,
-      price: "Paiement échelonné possible",
-      format: ["Sessions en ligne en direct", "Coaching personnalisé"],
-      objectives: [
-        "Maîtriser le contenu des trois parties CIA",
-        "Se préparer avec méthode et outils ciblés",
-        "Travailler avec QCM et examens blancs",
-        "Bénéficier d'un accompagnement régulier"
-      ],
-      targetAudience: "Auditeurs internes, contrôleurs, étudiants en audit ou finance",
-      included: ["Sessions live", "Ressources exclusives", "Examens blancs", "Coaching individuel", "Garantie réussite"],
-      popular: true
-    }
-  ];
+  const [formations, setFormations] = useState<Formation[]>([]);
+  const [showAll, setShowAll] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setLoading(true);
+    getAllFormations()
+      .then(res => setFormations(res.data))
+      .catch(() => setError("Erreur lors du chargement des formations."))
+      .finally(() => setLoading(false));
+  }, []);
 
   const advantages = [
     {
@@ -74,6 +43,8 @@ const Formations = () => {
       description: "95% de réussite aux certifications"
     }
   ];
+
+  const displayedFormations = showAll ? formations : formations.slice(0, 2);
 
   return (
     <>
@@ -128,49 +99,36 @@ const Formations = () => {
               ))}
             </div>
           </section>
-          {/* Formations */}
+          {/* Formations dynamiques */}
           <section className="mb-16">
             <h2 className="text-3xl font-bold text-center mb-12">Nos Programmes de Formation</h2>
+            {loading ? (
+              <div className="text-center text-blue-700 py-10">Chargement...</div>
+            ) : error ? (
+              <div className="text-center text-red-600 py-10">{error}</div>
+            ) : (
+              <>
             <div className="grid lg:grid-cols-2 gap-8">
-              {formations.map((formation, idx) => (
+                  {displayedFormations.map((formation, idx) => (
                 <Card
                   key={formation.id}
-                  className={`overflow-hidden shadow-float group transition-transform duration-300 hover:scale-105 hover:shadow-2xl hover:-translate-y-2 animate-fade-in-up ${formation.popular ? 'ring-2 ring-primary' : ''}`}
+                      className={`overflow-hidden shadow-float group transition-transform duration-300 hover:scale-105 hover:shadow-2xl hover:-translate-y-2 animate-fade-in-up`}
                   tabIndex={0}
-                  aria-label={formation.title}
+                      aria-label={formation.nom}
                   style={{ animationDelay: `${idx * 0.1}s` }}
                 >
-                  {formation.popular && (
-                    <div className="bg-primary text-white text-center py-2 font-semibold">
-                      ⭐ Formation Populaire
-                    </div>
-                  )}
                   <div className="relative overflow-hidden">
                     <img
                       src={formation.image}
-                      alt={formation.title}
+                          alt={formation.nom}
                       className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                     />
-                    {/* Overlay NDOP motif sur l'image */}
-                    <svg className="absolute top-4 left-4 w-8 h-8 opacity-15" viewBox="0 0 24 24">
-                      <rect x="2" y="2" width="20" height="20" rx="4" fill="#fff" />
-                    </svg>
-                    <svg className="absolute bottom-4 right-4 w-6 h-6 opacity-10" viewBox="0 0 24 24">
-                      <rect x="2" y="2" width="20" height="20" rx="4" fill="#fff" />
-                    </svg>
-                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold">
-                      {formation.level}
-                    </div>
                   </div>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
-                        {formation.title}
+                            {formation.nom}
                       </h3>
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                        <span className="text-sm ml-1">{formation.rating}</span>
-                      </div>
                     </div>
                     <p className="text-muted-foreground mb-4 leading-relaxed">
                       {formation.description}
@@ -178,38 +136,21 @@ const Formations = () => {
                     <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 text-primary mr-2" />
-                        {formation.duration}
+                            {formation.duree}
                       </div>
                       <div className="flex items-center">
                         <Users className="h-4 w-4 text-primary mr-2" />
-                        {formation.participants}
+                            {/* Participants non dispo en dynamique */}
+                            --
                       </div>
-                    </div>
-                    <div className="mb-4">
-                      <h4 className="font-semibold mb-2">Objectifs :</h4>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        {formation.objectives.slice(0, 3).map((objective, index) => (
-                          <li key={index} className="flex items-start">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                            {objective}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {formation.format.map((format, index) => (
-                        <span key={index} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs">
-                          {format}
-                        </span>
-                      ))}
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-sm text-muted-foreground">Tarif</div>
-                        <div className="font-bold text-lg">{formation.price}</div>
+                            <div className="font-bold text-lg">{formation.tarif}</div>
                       </div>
                       <Link to={`/formations/${formation.id}`}>
-                        <Button className="btn-primary group" aria-label={`Découvrir la formation ${formation.title}`}>
+                            <Button className="btn-primary group" aria-label={`Découvrir la formation ${formation.nom}`}>
                           Découvrir
                           <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </Button>
@@ -219,6 +160,15 @@ const Formations = () => {
                 </Card>
               ))}
             </div>
+                {!showAll && formations.length > 2 && (
+                  <div className="flex justify-center mt-10">
+                    <Button className="btn-primary px-8 py-3 text-lg font-bold" onClick={() => setShowAll(true)}>
+                      Voir tout
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
           </section>
           {/* CTA personnalisée */}
           <section className="text-center">

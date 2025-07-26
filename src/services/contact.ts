@@ -1,5 +1,5 @@
 // Service pour l'API contacts
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+import { API_BASE_URL } from '@/config/api';
 
 export type Contact = {
   id: number;

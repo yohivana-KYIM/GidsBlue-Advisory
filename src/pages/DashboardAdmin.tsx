@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminTopbar from '@/components/AdminTopbar';
+import ContactsAdmin from './ContactsAdmin';
+import FormationsAdmin from './FormationsAdmin';
+import CreateFormation from './CreateFormation';
 
 const DashboardAdmin = () => {
   const [active, setActive] = useState(window.location.hash || '#temoignages');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem('isAuthenticated') !== 'true') {
@@ -75,13 +79,19 @@ const DashboardAdmin = () => {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
-      <AdminSidebar active={active} onLogout={handleLogout} />
-      <div className="flex-1 flex flex-col min-h-screen">
+      <AdminSidebar active={active} onLogout={handleLogout} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300`}>
         <AdminTopbar onLogout={handleLogout} />
         <main className="flex-1 min-h-screen w-full bg-gradient-to-br from-blue-50 via-white to-blue-100 p-0 md:p-0 flex flex-col">
           <div className="w-full px-4 md:px-8 py-10 flex flex-col gap-8">
             {active === '#overview' ? (
               <OverviewSection />
+            ) : active === '#contacts' ? (
+              <ContactsAdmin />
+            ) : active === '#formations-create' ? (
+              <CreateFormation />
+            ) : active === '#formations' ? (
+              <FormationsAdmin />
             ) : (
               <>
                 <div className="bg-white rounded-2xl shadow-lg p-10 flex flex-col items-center justify-center text-3xl font-bold text-blue-900 w-full animate-fade-in mb-2">
