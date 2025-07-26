@@ -1,31 +1,27 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Eye, Pencil, Trash2, X, Search, CheckCircle2, 
   Plus, Filter, Download, RefreshCw, ChevronLeft, ChevronRight,
-  Calendar, Clock, DollarSign, Briefcase, Loader2, Tag
+  Calendar, Clock, DollarSign, Briefcase, Loader2, Tag, Users
 } from 'lucide-react';
 
 import {
-  getAllServices,
-  createService,
-  updateService,
-  deleteService,
-  getServiceById,
-  searchServices
-} from '@/services/services';
+  getAllPartenaires,
+  createPartenaire,
+  updatePartenaire,
+  deletePartenaire,
+  getPartenaireById,
+  searchPartenaires
+} from '@/services/partenaires';
 
 // Types
-interface Service {
+interface Partenaire {
   id: number;
   nom: string;
-  slug: string;
-  description: string;
-  categorie: string; // Ajouté pour correspondre à la migration
-  duree: string;
-  tarif: string;
+  description?: string;
   image?: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 // Hook pour media queries
@@ -76,7 +72,7 @@ const useToast = () => {
 };
 
 // Hook pour la pagination
-const usePagination = (data: Service[], itemsPerPage: number = 8) => {
+const usePagination = (data: Partenaire[], itemsPerPage: number = 8) => {
   const [currentPage, setCurrentPage] = useState(1);
   
   const totalPages = Math.ceil(data.length / itemsPerPage);
@@ -107,41 +103,35 @@ const usePagination = (data: Service[], itemsPerPage: number = 8) => {
 };
 
 // Données simulées
-const generateMockServices = (): Service[] => {
-  const services = [];
+const generateMockPartenaires = (): Partenaire[] => {
+  const partenaires = [];
   const noms = [
-    'Développement Web Sur Mesure', 'Audit SEO Complet', 'Gestion de Projet Agile',
-    'Marketing de Contenu', 'Création d\'Identité Visuelle', 'Consultation Stratégique',
-    'Maintenance Applicative', 'Campagne Publicitaire', 'UX/UI Design',
-    'Formation en Leadership', 'Analyse de Données', 'Développement Mobile'
+    'Microsoft', 'Google', 'Apple', 'Amazon', 'Meta', 'Netflix',
+    'Adobe', 'Oracle', 'IBM', 'Intel', 'Cisco', 'Salesforce',
+    'Zoom', 'Slack', 'Dropbox', 'Spotify', 'Uber', 'Airbnb'
   ];
-  const categories = ['Développement', 'Marketing', 'Conseil', 'Design', 'Formation'];
   
-  for (let i = 1; i <= 47; i++) {
-    services.push({
+  for (let i = 1; i <= 25; i++) {
+    partenaires.push({
       id: i,
       nom: noms[Math.floor(Math.random() * noms.length)] + ` #${i}`,
-      slug: `service-${i}`,
-      description: `Description détaillée du service ${i}. Cette prestation vous aide à atteindre vos objectifs professionnels.`,
-      categorie: categories[Math.floor(Math.random() * categories.length)],
-      duree: `${Math.floor(Math.random() * 30) + 5} jours`,
-      tarif: `${(Math.random() * 2000 + 500).toFixed(0)}€`,
-      image: `https://picsum.photos/400/300?random=${i}`,
+      description: `Description détaillée du partenaire ${i}. Ce partenaire contribue à notre écosystème technologique.`,
+      image: `https://picsum.photos/400/300?random=${i + 100}`,
       created_at: new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28)).toISOString()
     });
   }
-  return services;
+  return partenaires;
 };
 
 // Modal de détail
-const ServiceModal = ({ service, onClose }: { service: Service | null, onClose: () => void }) => {
-  if (!service) return null;
+const PartenaireModal = ({ partenaire, onClose }: { partenaire: Partenaire | null, onClose: () => void }) => {
+  if (!partenaire) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900">Détails du service</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Détails du partenaire</h2>
           <button 
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
@@ -154,38 +144,13 @@ const ServiceModal = ({ service, onClose }: { service: Service | null, onClose: 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
               <div>
-                <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Nom du service</label>
-                <p className="text-xl font-bold text-gray-900 mt-1">{service.nom}</p>
-              </div>
-
-               <div>
-                <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Catégorie</label>
-                <p className="mt-1">
-                  <span className="inline-block bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">{service.categorie}</span>
-                </p>
+                <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Nom du partenaire</label>
+                <p className="text-xl font-bold text-gray-900 mt-1">{partenaire.nom}</p>
               </div>
               
               <div>
                 <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Description</label>
-                <p className="text-gray-700 mt-1 leading-relaxed">{service.description}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-4 rounded-xl">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="w-5 h-5 text-blue-600" />
-                    <label className="text-sm font-semibold text-blue-600">Durée</label>
-                  </div>
-                  <p className="text-lg font-bold text-blue-900">{service.duree}</p>
-                </div>
-                
-                <div className="bg-green-50 p-4 rounded-xl">
-                  <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="w-5 h-5 text-green-600" />
-                    <label className="text-sm font-semibold text-green-600">Tarif</label>
-                  </div>
-                  <p className="text-lg font-bold text-green-900">{service.tarif}</p>
-                </div>
+                <p className="text-gray-700 mt-1 leading-relaxed">{partenaire.description || 'Aucune description disponible'}</p>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-xl">
@@ -194,7 +159,7 @@ const ServiceModal = ({ service, onClose }: { service: Service | null, onClose: 
                   <label className="text-sm font-semibold text-gray-600">Date de création</label>
                 </div>
                 <p className="text-gray-900 font-medium">
-                  {service.created_at ? new Date(service.created_at).toLocaleDateString('fr-FR', {
+                  {partenaire.created_at ? new Date(partenaire.created_at).toLocaleDateString('fr-FR', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
@@ -204,16 +169,16 @@ const ServiceModal = ({ service, onClose }: { service: Service | null, onClose: 
             </div>
 
             <div className="flex flex-col items-center">
-              <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Image du service</label>
-              {service.image ? (
+              <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Logo du partenaire</label>
+              {partenaire.image ? (
                 <img 
-                  src={service.image} 
-                  alt={service.nom}
+                  src={partenaire.image} 
+                  alt={partenaire.nom}
                   className="w-full max-w-md h-64 object-cover rounded-xl shadow-lg"
                 />
               ) : (
                 <div className="w-full max-w-md h-64 bg-gray-100 rounded-xl flex items-center justify-center">
-                  <Briefcase className="w-16 h-16 text-gray-400" />
+                  <Users className="w-16 h-16 text-gray-400" />
                 </div>
               )}
             </div>
@@ -225,15 +190,11 @@ const ServiceModal = ({ service, onClose }: { service: Service | null, onClose: 
 };
 
 // Modal de création
-const CreateServiceModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: () => void }) => {
+const CreatePartenaireModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: () => void }) => {
   const { toast } = useToast();
   const [form, setForm] = useState({
     nom: '',
-    slug: '',
     description: '',
-    categorie: '',
-    duree: '',
-    tarif: '',
     image: null as File | null
   });
   const [loading, setLoading] = useState(false);
@@ -259,12 +220,12 @@ const CreateServiceModal = ({ onClose, onCreated }: { onClose: () => void, onCre
       Object.entries(form).forEach(([key, value]) => {
         if (value) fd.append(key, value as any);
       });
-      await createService(fd);
+      await createPartenaire(fd);
       toast({
         title: (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-green-600" />
-            <span>Service créé avec succès !</span>
+            <span>Partenaire créé avec succès !</span>
           </div>
         ),
         type: 'success'
@@ -282,45 +243,21 @@ const CreateServiceModal = ({ onClose, onCreated }: { onClose: () => void, onCre
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900">Créer un nouveau service</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Créer un nouveau partenaire</h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100">
             <X className="w-6 h-6 text-gray-500" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: '70vh' }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Nom du service</label>
-              <input
-                type="text"
-                value={form.nom}
-                onChange={(e) => setForm({...form, nom: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Ex: Audit SEO Complet"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Catégorie</label>
-              <input
-                type="text"
-                value={form.categorie}
-                onChange={(e) => setForm({...form, categorie: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Ex: Conseil, Développement..."
-                required
-              />
-            </div>
-          </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Slug</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Nom du partenaire</label>
             <input
-                type="text"
-                value={form.slug}
-                onChange={(e) => setForm({...form, slug: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Ex: audit-seo-complet"
-                required
+              type="text"
+              value={form.nom}
+              onChange={(e) => setForm({...form, nom: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="Ex: Microsoft"
+              required
             />
           </div>
           <div>
@@ -330,34 +267,11 @@ const CreateServiceModal = ({ onClose, onCreated }: { onClose: () => void, onCre
               onChange={(e) => setForm({...form, description: e.target.value})}
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-              placeholder="Description détaillée du service..."
-              required
+              placeholder="Description détaillée du partenaire..."
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Durée</label>
-              <input
-                type="text"
-                value={form.duree}
-                onChange={(e) => setForm({...form, duree: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Ex: 10 jours"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Tarif</label>
-        <input
-          type="text"
-                value={form.tarif}
-                onChange={(e) => setForm({...form, tarif: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Ex: 1500€"
-              />
-            </div>
-          </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Image</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Logo</label>
             <input
               type="file"
               accept="image/*"
@@ -367,7 +281,7 @@ const CreateServiceModal = ({ onClose, onCreated }: { onClose: () => void, onCre
           </div>
           {imagePreview && (
             <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Aperçu de l'image</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Aperçu du logo</label>
               <div className="flex flex-col items-center p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
                 <img src={imagePreview} alt="Aperçu" className="h-40 w-auto rounded-lg shadow-lg mb-3 object-cover" />
                 <div className="flex items-center gap-2">
@@ -377,7 +291,7 @@ const CreateServiceModal = ({ onClose, onCreated }: { onClose: () => void, onCre
                     className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4 mr-1" />
-                    Retirer l'image
+                    Retirer le logo
                   </button>
                 </div>
               </div>
@@ -391,29 +305,29 @@ const CreateServiceModal = ({ onClose, onCreated }: { onClose: () => void, onCre
             >
               Annuler
             </button>
-        <button
-          type="submit"
+            <button
+              type="submit"
               disabled={loading}
               className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-        >
+            >
               {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-              {loading ? 'Création...' : 'Créer le service'}
-        </button>
+              {loading ? 'Création...' : 'Créer le partenaire'}
+            </button>
           </div>
-      </form>
+        </form>
       </div>
     </div>
   );
 };
 
 // Modal de suppression
-const DeleteModal = ({ service, onCancel, onConfirm, loading }: {
-  service: Service | null;
+const DeleteModal = ({ partenaire, onCancel, onConfirm, loading }: {
+  partenaire: Partenaire | null;
   onCancel: () => void;
   onConfirm: () => void;
   loading: boolean;
 }) => {
-  if (!service) return null;
+  if (!partenaire) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -423,9 +337,9 @@ const DeleteModal = ({ service, onCancel, onConfirm, loading }: {
             <Trash2 className="w-8 h-8 text-red-600" />
           </div>
           
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Supprimer le service</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Supprimer le partenaire</h2>
           <p className="text-gray-600 mb-6">
-            Êtes-vous sûr de vouloir supprimer <span className="font-semibold text-gray-900">"{service.nom}"</span> ?
+            Êtes-vous sûr de vouloir supprimer <span className="font-semibold text-gray-900">"{partenaire.nom}"</span> ?
             <br />Cette action est irréversible.
           </p>
 
@@ -503,84 +417,82 @@ const Pagination = ({
   </div>
 );
 
-// Tableau des services
-const ServicesTable = ({ services, onView, onEdit, onDelete }: {
-  services: Service[]; onView: (service: Service) => void; onEdit: (service: Service) => void; onDelete: (service: Service) => void;
+// Tableau des partenaires
+const PartenairesTable = ({ partenaires, onView, onEdit, onDelete }: {
+  partenaires: Partenaire[]; onView: (partenaire: Partenaire) => void; onEdit: (partenaire: Partenaire) => void; onDelete: (partenaire: Partenaire) => void;
 }) => (
   <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
-            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Catégorie</th>
-            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Durée</th>
-            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tarif</th>
+            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Partenaire</th>
+            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</th>
+            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date de création</th>
             <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
+          </tr>
+        </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {services.map((service) => (
-            <tr key={service.id} className="hover:bg-gray-50 transition-colors">
+          {partenaires.map((partenaire) => (
+            <tr key={partenaire.id} className="hover:bg-gray-50 transition-colors">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
-                    {service.image && (
-                    <img className="h-12 w-12 rounded-lg object-cover mr-4" src={service.image} alt={service.nom} />
+                  {partenaire.image && (
+                    <img className="h-12 w-12 rounded-lg object-cover mr-4" src={partenaire.image} alt={partenaire.nom} />
                   )}
                   <div>
-                    <div className="text-sm font-semibold text-gray-900">{service.nom}</div>
-                    <div className="text-sm text-gray-500 max-w-xs truncate" title={service.description}>
-                      {service.description}
-                    </div>
+                    <div className="text-sm font-semibold text-gray-900">{partenaire.nom}</div>
                   </div>
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="inline-block bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-1 rounded-full">{service.categorie}</span>
+              <td className="px-6 py-4">
+                <div className="text-sm text-gray-500 max-w-xs truncate" title={partenaire.description}>
+                  {partenaire.description || 'Aucune description'}
+                </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{service.duree}</td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="text-sm font-semibold text-green-600">{service.tarif}</span>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {partenaire.created_at ? new Date(partenaire.created_at).toLocaleDateString('fr-FR') : 'N/A'}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-center">
                 <div className="flex items-center justify-center space-x-2">
-                  <button onClick={() => onView(service)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Voir"><Eye className="w-5 h-5" /></button>
-                  <button onClick={() => onEdit(service)} className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg" title="Modifier"><Pencil className="w-5 h-5" /></button>
-                  <button onClick={() => onDelete(service)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Supprimer"><Trash2 className="w-5 h-5" /></button>
+                  <button onClick={() => onView(partenaire)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Voir"><Eye className="w-5 h-5" /></button>
+                  <button onClick={() => onEdit(partenaire)} className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg" title="Modifier"><Pencil className="w-5 h-5" /></button>
+                  <button onClick={() => onDelete(partenaire)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Supprimer"><Trash2 className="w-5 h-5" /></button>
                 </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   </div>
 );
 
-// Grille des services (mobile)
-const ServicesGrid = ({ services, onView, onEdit, onDelete }: {
-  services: Service[]; onView: (service: Service) => void; onEdit: (service: Service) => void; onDelete: (service: Service) => void;
+// Grille des partenaires (mobile)
+const PartenairesGrid = ({ partenaires, onView, onEdit, onDelete }: {
+  partenaires: Partenaire[]; onView: (partenaire: Partenaire) => void; onEdit: (partenaire: Partenaire) => void; onDelete: (partenaire: Partenaire) => void;
 }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-    {services.map((service) => (
-      <div key={service.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow">
-        {service.image && <img src={service.image} alt={service.nom} className="w-full h-48 object-cover" />}
+    {partenaires.map((partenaire) => (
+      <div key={partenaire.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow">
+        {partenaire.image && <img src={partenaire.image} alt={partenaire.nom} className="w-full h-48 object-cover" />}
         <div className="p-6">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="text-lg font-bold text-gray-900 pr-2">{service.nom}</h3>
-            <span className="flex-shrink-0 inline-block bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-1 rounded-full">{service.categorie}</span>
+            <h3 className="text-lg font-bold text-gray-900 pr-2">{partenaire.nom}</h3>
           </div>
-          <p className="text-gray-600 text-sm mb-4 line-clamp-2">{service.description}</p>
+          <p className="text-gray-600 text-sm mb-4 line-clamp-2">{partenaire.description || 'Aucune description'}</p>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4 text-sm">
-              <span className="flex items-center gap-1 text-gray-500"><Clock className="w-4 h-4" />{service.duree}</span>
-              <span className="font-semibold text-green-600">{service.tarif}</span>
+              <span className="flex items-center gap-1 text-gray-500">
+                <Calendar className="w-4 h-4" />
+                {partenaire.created_at ? new Date(partenaire.created_at).toLocaleDateString('fr-FR') : 'N/A'}
+              </span>
             </div>
           </div>
           <div className="flex items-center justify-end space-x-2">
-            <button onClick={() => onView(service)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Voir"><Eye className="w-5 h-5" /></button>
-            <button onClick={() => onEdit(service)} className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg" title="Modifier"><Pencil className="w-5 h-5" /></button>
-            <button onClick={() => onDelete(service)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Supprimer"><Trash2 className="w-5 h-5" /></button>
+            <button onClick={() => onView(partenaire)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Voir"><Eye className="w-5 h-5" /></button>
+            <button onClick={() => onEdit(partenaire)} className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg" title="Modifier"><Pencil className="w-5 h-5" /></button>
+            <button onClick={() => onDelete(partenaire)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Supprimer"><Trash2 className="w-5 h-5" /></button>
           </div>
         </div>
       </div>
@@ -589,19 +501,15 @@ const ServicesGrid = ({ services, onView, onEdit, onDelete }: {
 );
 
 // Modal d'édition
-const EditServiceModal = ({ service, onClose, onUpdated }: { service: Service, onClose: () => void, onUpdated: () => void }) => {
+const EditPartenaireModal = ({ partenaire, onClose, onUpdated }: { partenaire: Partenaire, onClose: () => void, onUpdated: () => void }) => {
   const { toast } = useToast();
   const [form, setForm] = useState({
-    nom: service.nom,
-    slug: service.slug,
-    description: service.description,
-    categorie: service.categorie,
-    duree: service.duree,
-    tarif: service.tarif,
+    nom: partenaire.nom,
+    description: partenaire.description || '',
     image: null as File | null
   });
   const [loading, setLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(service.image || null);
+  const [imagePreview, setImagePreview] = useState<string | null>(partenaire.image || null);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -623,12 +531,12 @@ const EditServiceModal = ({ service, onClose, onUpdated }: { service: Service, o
       Object.entries(form).forEach(([key, value]) => {
         if (value) fd.append(key, value as any);
       });
-      await updateService(service.id, fd);
+      await updatePartenaire(partenaire.id, fd);
       toast({
         title: (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-green-600" />
-            <span>Service modifié avec succès !</span>
+            <span>Partenaire modifié avec succès !</span>
           </div>
         ),
         type: 'success'
@@ -646,42 +554,20 @@ const EditServiceModal = ({ service, onClose, onUpdated }: { service: Service, o
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900">Modifier le service</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Modifier le partenaire</h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100">
             <X className="w-6 h-6 text-gray-500" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: '70vh' }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Nom du service</label>
-              <input
-                type="text"
-                value={form.nom}
-                onChange={(e) => setForm({...form, nom: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Catégorie</label>
-              <input
-                type="text"
-                value={form.categorie}
-                onChange={(e) => setForm({...form, categorie: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                required
-              />
-            </div>
-          </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Slug</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Nom du partenaire</label>
             <input
-                type="text"
-                value={form.slug}
-                onChange={(e) => setForm({...form, slug: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                required
+              type="text"
+              value={form.nom}
+              onChange={(e) => setForm({...form, nom: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              required
             />
           </div>
           <div>
@@ -691,31 +577,10 @@ const EditServiceModal = ({ service, onClose, onUpdated }: { service: Service, o
               onChange={(e) => setForm({...form, description: e.target.value})}
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-              required
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Durée</label>
-              <input
-                type="text"
-                value={form.duree}
-                onChange={(e) => setForm({...form, duree: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Tarif</label>
-              <input
-                type="text"
-                value={form.tarif}
-                onChange={(e) => setForm({...form, tarif: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-            </div>
-          </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Image</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Logo</label>
             <input
               type="file"
               accept="image/*"
@@ -725,7 +590,7 @@ const EditServiceModal = ({ service, onClose, onUpdated }: { service: Service, o
           </div>
           {imagePreview && (
             <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Aperçu de l'image</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Aperçu du logo</label>
               <div className="flex flex-col items-center p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
                 <img src={imagePreview} alt="Aperçu" className="h-40 w-auto rounded-lg shadow-lg mb-3 object-cover" />
                 <div className="flex items-center gap-2">
@@ -735,7 +600,7 @@ const EditServiceModal = ({ service, onClose, onUpdated }: { service: Service, o
                     className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4 mr-1" />
-                    Retirer l'image
+                    Retirer le logo
                   </button>
                 </div>
               </div>
@@ -765,36 +630,36 @@ const EditServiceModal = ({ service, onClose, onUpdated }: { service: Service, o
 };
 
 // Composant principal
-const ServicesAdmin = () => {
+const PartenairesAdmin = () => {
   const { toast, ToastContainer } = useToast();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  const [services, setServices] = useState<Service[]>([]);
-  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
+  const [partenaires, setPartenaires] = useState<Partenaire[]>([]);
+  const [filteredPartenaires, setFilteredPartenaires] = useState<Partenaire[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
+  const [selectedPartenaire, setSelectedPartenaire] = useState<Partenaire | null>(null);
+  const [partenaireToDelete, setPartenaireToDelete] = useState<Partenaire | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [serviceToEdit, setServiceToEdit] = useState<Service | null>(null);
+  const [partenaireToEdit, setPartenaireToEdit] = useState<Partenaire | null>(null);
 
-  const pagination = usePagination(filteredServices, 8);
+  const pagination = usePagination(filteredPartenaires, 8);
 
-  // Charger les services au montage
+  // Charger les partenaires au montage
   useEffect(() => {
-    fetchServices();
+    fetchPartenaires();
   }, []);
 
-  const fetchServices = async () => {
+  const fetchPartenaires = async () => {
     setLoading(true);
     try {
-      const res = await getAllServices();
-      setServices(res.data);
-      setFilteredServices(res.data);
+      const res = await getAllPartenaires();
+      setPartenaires(res.data);
+      setFilteredPartenaires(res.data);
     } catch {
-      toast({ title: 'Erreur lors du chargement des services', type: 'error' });
+      toast({ title: 'Erreur lors du chargement des partenaires', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -803,32 +668,32 @@ const ServicesAdmin = () => {
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
     if (!query.trim()) {
-      setFilteredServices(services);
+      setFilteredPartenaires(partenaires);
       return;
     }
     setLoading(true);
     try {
-      const res = await searchServices(query);
-      setFilteredServices(res.data);
+      const res = await searchPartenaires(query);
+      setFilteredPartenaires(res.data);
     } catch {
       toast({ title: 'Erreur lors de la recherche', type: 'error' });
     } finally {
       setLoading(false);
     }
-  }, [services, toast]);
+  }, [partenaires, toast]);
 
-  const handleEdit = (service: Service) => setServiceToEdit(service);
+  const handleEdit = (partenaire: Partenaire) => setPartenaireToEdit(partenaire);
 
   const handleDeleteConfirm = async () => {
-    if (!serviceToDelete) return;
+    if (!partenaireToDelete) return;
     setIsDeleting(true);
     try {
-      await deleteService(serviceToDelete.id);
-      setFilteredServices(prev => prev.filter(f => f.id !== serviceToDelete.id));
-      setServices(prev => prev.filter(f => f.id !== serviceToDelete.id));
+      await deletePartenaire(partenaireToDelete.id);
+      setFilteredPartenaires(prev => prev.filter(f => f.id !== partenaireToDelete.id));
+      setPartenaires(prev => prev.filter(f => f.id !== partenaireToDelete.id));
       toast({ title: (
-        <div className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-600" /><span>Service "{serviceToDelete.nom}" supprimé avec succès</span></div>), type: 'success' });
-      setServiceToDelete(null);
+        <div className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-600" /><span>Partenaire "{partenaireToDelete.nom}" supprimé avec succès</span></div>), type: 'success' });
+      setPartenaireToDelete(null);
     } catch {
       toast({ title: 'Erreur lors de la suppression', type: 'error' });
     } finally {
@@ -837,19 +702,15 @@ const ServicesAdmin = () => {
   };
 
   const handleRefresh = () => {
-    fetchServices();
+    fetchPartenaires();
     setSearchQuery('');
     toast({ title: <div className="flex items-center gap-2"><RefreshCw className="w-5 h-5 text-blue-600" /><span>Liste actualisée</span></div>, type: 'success' });
   };
 
   const handleCreated = () => { handleRefresh(); };
 
-  const uniqueCategories = Array.from(new Set(services.map(s => s.categorie).filter(Boolean)));
-  const totalCategories = uniqueCategories.length;
-
   const stats = [
-    { title: 'Total Services', value: services.length, icon: Briefcase, color: 'blue' },
-    { title: 'Catégories', value: totalCategories, icon: Tag, color: 'green' }
+    { title: 'Total Partenaires', value: partenaires.length, icon: Users, color: 'blue' }
   ];
 
   return (
@@ -858,10 +719,10 @@ const ServicesAdmin = () => {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center"><Briefcase className="w-8 h-8 text-blue-600 mr-3" /><h1 className="text-2xl font-bold text-gray-900">Gestion des Services</h1></div>
+            <div className="flex items-center"><Users className="w-8 h-8 text-blue-600 mr-3" /><h1 className="text-2xl font-bold text-gray-900">Gestion des Partenaires</h1></div>
             <div className="flex items-center space-x-4">
               <button onClick={handleRefresh} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg" title="Actualiser"><RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} /></button>
-              <button onClick={() => setShowCreateModal(true)} className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"><Plus className="w-5 h-5 mr-2" />Nouveau Service</button>
+              <button onClick={() => setShowCreateModal(true)} className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"><Plus className="w-5 h-5 mr-2" />Nouveau Partenaire</button>
             </div>
           </div>
         </div>
@@ -879,13 +740,12 @@ const ServicesAdmin = () => {
               </div>
             </div>
           ))}
-
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="relative flex-1 max-w-lg">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input type="text" value={searchQuery} onChange={(e) => handleSearch(e.target.value)} placeholder="Rechercher par nom, description ou catégorie..." className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
+              <input type="text" value={searchQuery} onChange={(e) => handleSearch(e.target.value)} placeholder="Rechercher par nom ou description..." className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
             </div>
             <div className="flex items-center space-x-3">
               <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"><Filter className="w-4 h-4 mr-2" />Filtrer</button>
@@ -893,20 +753,20 @@ const ServicesAdmin = () => {
           </div>
         </div>
         {loading ? (
-          <div className="bg-white rounded-2xl p-12 flex flex-col items-center justify-center"><Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-4" /><p className="text-gray-600">Chargement des services...</p></div>
-        ) : filteredServices.length === 0 ? (
+          <div className="bg-white rounded-2xl p-12 flex flex-col items-center justify-center"><Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-4" /><p className="text-gray-600">Chargement des partenaires...</p></div>
+        ) : filteredPartenaires.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center">
-            <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun service trouvé</h3>
-            <p className="text-gray-600 mb-6">{searchQuery ? 'Aucun résultat pour votre recherche.' : 'Commencez par créer votre premier service.'}</p>
-            {!searchQuery && <button onClick={() => setShowCreateModal(true)} className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"><Plus className="w-5 h-5 mr-2" />Créer un service</button>}
+            <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun partenaire trouvé</h3>
+            <p className="text-gray-600 mb-6">{searchQuery ? 'Aucun résultat pour votre recherche.' : 'Commencez par créer votre premier partenaire.'}</p>
+            {!searchQuery && <button onClick={() => setShowCreateModal(true)} className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"><Plus className="w-5 h-5 mr-2" />Créer un partenaire</button>}
           </div>
         ) : (
           <div className="space-y-6">
             {isMobile ? (
-              <ServicesGrid services={pagination.currentData} onView={setSelectedService} onEdit={handleEdit} onDelete={setServiceToDelete} />
+              <PartenairesGrid partenaires={pagination.currentData} onView={setSelectedPartenaire} onEdit={handleEdit} onDelete={setPartenaireToDelete} />
             ) : (
-              <ServicesTable services={pagination.currentData} onView={setSelectedService} onEdit={handleEdit} onDelete={setServiceToDelete} />
+              <PartenairesTable partenaires={pagination.currentData} onView={setSelectedPartenaire} onEdit={handleEdit} onDelete={setPartenaireToDelete} />
             )}
             {pagination.totalPages > 1 && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -916,12 +776,12 @@ const ServicesAdmin = () => {
           </div>
         )}
       </div>
-      {selectedService && <ServiceModal service={selectedService} onClose={() => setSelectedService(null)} />}
-      {showCreateModal && <CreateServiceModal onClose={() => setShowCreateModal(false)} onCreated={handleCreated} />}
-      {serviceToDelete && <DeleteModal service={serviceToDelete} onCancel={() => setServiceToDelete(null)} onConfirm={handleDeleteConfirm} loading={isDeleting} />}
-      {serviceToEdit && <EditServiceModal service={serviceToEdit} onClose={() => setServiceToEdit(null)} onUpdated={handleRefresh} />}
+      {selectedPartenaire && <PartenaireModal partenaire={selectedPartenaire} onClose={() => setSelectedPartenaire(null)} />}
+      {showCreateModal && <CreatePartenaireModal onClose={() => setShowCreateModal(false)} onCreated={handleCreated} />}
+      {partenaireToDelete && <DeleteModal partenaire={partenaireToDelete} onCancel={() => setPartenaireToDelete(null)} onConfirm={handleDeleteConfirm} loading={isDeleting} />}
+      {partenaireToEdit && <EditPartenaireModal partenaire={partenaireToEdit} onClose={() => setPartenaireToEdit(null)} onUpdated={handleRefresh} />}
     </div>
   );
 };
 
-export default ServicesAdmin; 
+export default PartenairesAdmin;

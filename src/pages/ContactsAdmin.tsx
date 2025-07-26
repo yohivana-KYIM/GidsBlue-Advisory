@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getContacts, getContactById, Contact, deleteContact } from '@/services/contact';
 import { Card } from '@/components/ui/card';
 import { Loader2, Eye, Pencil, Trash2, X } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 const ContactModal = ({ contact, onClose }: { contact: Contact | null, onClose: () => void }) => {
   if (!contact) return null;
@@ -138,8 +139,18 @@ const ContactsAdmin = () => {
       setContacts((prev) => prev.filter((c) => c.id !== deleteContactId));
       setDeleteContactId(null);
       setDeleteContactObj(null);
+      toast({
+        title: "Contact supprimé",
+        description: `Le contact "${deleteContactObj?.nom}" a été supprimé.`,
+        type: "success",
+      });
     } catch {
       setError("Erreur lors de la suppression du contact.");
+      toast({
+        title: "Erreur de suppression",
+        description: "Impossible de supprimer le contact.",
+        type: "error",
+      });
     } finally {
       setDeleteLoading(false);
     }

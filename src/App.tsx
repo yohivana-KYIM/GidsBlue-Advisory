@@ -31,7 +31,7 @@ const App = () => (
           <Route path="/formations/:id" element={<FormationDetail />} />
           <Route path="/services" element={<Services />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<DashboardAdmin />} />
+          <Route path="/dashboard/*" element={<DashboardAdmin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
